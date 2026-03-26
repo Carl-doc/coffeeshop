@@ -7,7 +7,7 @@ if (!isset($_SESSION["user_id"]) || $_SESSION["role"] !== "customer") {
     exit();
 }
 
-$user_id = $_SESSION["user_id"];
+$user_id = (int) $_SESSION["user_id"];
 
 $query = "
     SELECT *
@@ -17,6 +17,7 @@ $query = "
 ";
 $result = mysqli_query($conn, $query);
 ?>
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -40,7 +41,7 @@ $result = mysqli_query($conn, $query);
             <a href="menu.php">Menu</a>
             <a href="cart.php">Cart</a>
             <a href="orders.php" class="active">My Orders</a>
-            <a href="../logout.php">Logout</a>
+            <a href="#" onclick="openLogoutModal(); return false;">Logout</a>
         </nav>
     </aside>
 
@@ -56,6 +57,7 @@ $result = mysqli_query($conn, $query);
             <?php if ($result && mysqli_num_rows($result) > 0): ?>
                 <?php while ($row = mysqli_fetch_assoc($result)): ?>
                     <div class="order-card">
+
                         <div class="order-card-header">
                             <div>
                                 <h3>Order #<?php echo $row["order_id"]; ?></h3>
@@ -77,6 +79,7 @@ $result = mysqli_query($conn, $query);
                                 <ul>
                                     <?php
                                     $order_id = $row["order_id"];
+
                                     $itemsQuery = "
                                         SELECT order_items.quantity, order_items.price, order_items.subtotal, products.product_name
                                         FROM order_items
@@ -91,17 +94,15 @@ $result = mysqli_query($conn, $query);
                                         <li>
                                             <?php echo htmlspecialchars($item["product_name"]); ?> —
                                             ₱<?php echo number_format($item["price"], 2); ?> ×
-                                            <?php echo $item["quantity"]; ?> =
+                                            <?php echo (int)$item["quantity"]; ?> =
                                             ₱<?php echo number_format($item["subtotal"], 2); ?>
                                         </li>
-                                    <?php
-                                        endwhile;
-                                    else:
-                                    ?>
+                                    <?php endwhile; else: ?>
                                         <li>No items found.</li>
                                     <?php endif; ?>
                                 </ul>
                             </div>
+
                         </div>
                     </div>
                 <?php endwhile; ?>
@@ -115,6 +116,48 @@ $result = mysqli_query($conn, $query);
         </div>
     </main>
 </div>
+
+<!-- LOGOUT MODAL -->
+<div class="logout-modal-overlay" id="logoutModal">
+    <div class="logout-modal-box">
+        <div class="logout-modal-header">
+            <h3>Logout</h3>
+            <button class="logout-close-btn" onclick="closeLogoutModal()">&times;</button>
+        </div>
+
+        <div class="logout-modal-body">
+            <p>Are you sure you want to logout from your account?</p>
+        </div>
+
+        <div class="logout-modal-actions">
+            <button class="logout-cancel-btn" onclick="closeLogoutModal()">Cancel</button>
+            <a href="logout.php" class="logout-confirm-btn">Yes, Logout</a>
+        </div>
+    </div>
+</div>
+
+<script>
+function openLogoutModal() {
+    document.getElementById("logoutModal").classList.add("show");
+}
+
+function closeLogoutModal() {
+    document.getElementById("logoutModal").classList.remove("show");
+}
+
+document.addEventListener("keydown", function(e) {
+    if (e.key === "Escape") {
+        closeLogoutModal();
+    }
+});
+
+document.addEventListener("click", function(e) {
+    const modal = document.getElementById("logoutModal");
+    if (e.target === modal) {
+        closeLogoutModal();
+    }
+});
+</script>
 
 </body>
 </html>

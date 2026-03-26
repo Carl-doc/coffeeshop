@@ -2,36 +2,22 @@
 session_start();
 include(__DIR__ . "/../includes/dbConnect.php");
 
-if (!isset($_SESSION["user_id"])) {
+if (!isset($_SESSION["user_id"]) || $_SESSION["role"] !== "customer") {
     header("Location: login.php");
     exit();
 }
 
 $user_id = $_SESSION["user_id"];
 
-// HANDLE ADD TO CART
-if (isset($_GET["add"])) {
-    $product_id = intval($_GET["add"]);
-
-    $check = mysqli_query($conn, "SELECT * FROM cart WHERE user_id = $user_id AND product_id = $product_id");
-
-    if (mysqli_num_rows($check) > 0) {
-        mysqli_query($conn, "UPDATE cart SET quantity = quantity + 1 WHERE user_id = $user_id AND product_id = $product_id");
-    } else {
-        mysqli_query($conn, "INSERT INTO cart (user_id, product_id, quantity) VALUES ($user_id, $product_id, 1)");
-    }
-
-    header("Location: menu.php");
-    exit();
-}
-
 // GET PRODUCTS
-$products = mysqli_query($conn, "SELECT * FROM products WHERE status = 'available'");
+$products = mysqli_query($conn, "SELECT * FROM products ORDER BY product_id DESC");
 ?>
 
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Menu | Cafe Cruise</title>
     <link rel="stylesheet" href="../assets/css/customer.css">
 </head>
@@ -56,25 +42,49 @@ $products = mysqli_query($conn, "SELECT * FROM products WHERE status = 'availabl
 
     <main class="customer-main">
 
-        <h1>Menu</h1>
+        <div class="customer-topbar">
+            <div>
+                <h1>Menu</h1>
+                <p>Browse available drinks and add them to your cart.</p>
+            </div>
+        </div>
 
         <div class="menu-grid">
 
-            <?php while ($row = mysqli_fetch_assoc($products)) : ?>
+            <?php if ($products && mysqli_num_rows($products) > 0) : ?>
+                <?php while ($row = mysqli_fetch_assoc($products)) : ?>
+                    <div class="menu-card">
 
-                <div class="menu-card">
-                    <div class="menu-image"></div>
+                        <div class="menu-image">
+                            <?php if (!empty($row["image"])) : ?>
+                                <img src="../assets/products/<?php echo htmlspecialchars($row["image"]); ?>" alt="<?php echo htmlspecialchars($row["product_name"]); ?>">
+                            <?php else : ?>
+                                <div class="no-image">No Image</div>
+                            <?php endif; ?>
+                        </div>
 
-                    <h3><?php echo $row["product_name"]; ?></h3>
-                    <p><?php echo $row["description"]; ?></p>
-                    <span>₱<?php echo $row["price"]; ?></span>
+                        <h3><?php echo htmlspecialchars($row["product_name"]); ?></h3>
+                        <p class="menu-category"><?php echo htmlspecialchars($row["category"]); ?></p>
+                        <p><?php echo htmlspecialchars($row["description"]); ?></p>
+                        <span>₱<?php echo number_format($row["price"], 2); ?></span>
+                        <small class="stock-text">Stock: <?php echo (int)$row["stock"]; ?></small>
 
-                    <a href="?add=<?php echo $row["product_id"]; ?>" class="add-btn">
-                        Add to Cart
-                    </a>
+                        <?php if ($row["status"] === "available" && (int)$row["stock"] > 0): ?>
+                            <a href="add_to_cart.php?id=<?php echo $row["product_id"]; ?>" class="add-btn">
+                                Add to Cart
+                            </a>
+                        <?php else: ?>
+                            <button class="add-btn unavailable-btn" disabled>Out of Stock</button>
+                        <?php endif; ?>
+
+                    </div>
+                <?php endwhile; ?>
+            <?php else : ?>
+                <div class="empty-cart-box">
+                    <h3>No products available</h3>
+                    <p>Please check again later.</p>
                 </div>
-
-            <?php endwhile; ?>
+            <?php endif; ?>
 
         </div>
 

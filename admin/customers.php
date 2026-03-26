@@ -42,7 +42,7 @@ $result = mysqli_query($conn, $query);
             <a href="orders.php">Orders</a>
             <a href="customers.php" class="active">Customers</a>
             <a href="reports.php">Reports</a>
-            <a href="../logout.php">Logout</a>
+            <a href="#" onclick="openLogoutModal(); return false;">Logout</a>
         </nav>
     </aside>
 
@@ -100,6 +100,47 @@ $result = mysqli_query($conn, $query);
     </main>
 
 </div>
+
+<div class="logout-modal-overlay" id="logoutModal">
+    <div class="logout-modal-box">
+        <div class="logout-modal-header">
+            <h3>Logout</h3>
+            <button type="button" class="logout-close-btn" onclick="closeLogoutModal()">&times;</button>
+        </div>
+
+        <div class="logout-modal-body">
+            <p>Are you sure you want to logout from your admin account?</p>
+        </div>
+
+        <div class="logout-modal-actions">
+            <button type="button" class="logout-cancel-btn" onclick="closeLogoutModal()">Cancel</button>
+            <a href="logout.php" class="logout-confirm-btn">Yes, Logout</a>
+        </div>
+    </div>
+</div>
+
+<script>
+function openLogoutModal() {
+    document.getElementById("logoutModal").classList.add("show");
+}
+
+function closeLogoutModal() {
+    document.getElementById("logoutModal").classList.remove("show");
+}
+
+document.addEventListener("keydown", function(e) {
+    if (e.key === "Escape") {
+        closeLogoutModal();
+    }
+});
+
+document.addEventListener("click", function(e) {
+    const modal = document.getElementById("logoutModal");
+    if (e.target === modal) {
+        closeLogoutModal();
+    }
+});
+</script>
 
 </body>
 </html>

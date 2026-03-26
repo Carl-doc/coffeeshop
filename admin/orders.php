@@ -12,15 +12,23 @@ $success = "";
 /* UPDATE STATUS */
 if (isset($_POST["update_status"])) {
     $order_id = intval($_POST["order_id"]);
-    $order_status = mysqli_real_escape_string($conn, $_POST["order_status"]);
+    $allowed_statuses = ["pending", "preparing", "out_for_delivery", "completed", "cancelled"];
+    $order_status = $_POST["order_status"] ?? "";
 
-    mysqli_query($conn, "UPDATE orders SET order_status = '$order_status' WHERE order_id = $order_id");
-    header("Location: orders.php?success=updated");
-    exit();
-}
+    if (!in_array($order_status, $allowed_statuses, true)) {
+        header("Location: orders.php?success=invalid");
+        exit();
+    }
 
-if (isset($_GET["success"]) && $_GET["success"] === "updated") {
-    $success = "Order status updated successfully.";
+    $stmt = mysqli_prepare($conn, "UPDATE orders SET order_status = ? WHERE order_id = ?");
+    mysqli_stmt_bind_param($stmt, "si", $order_status, $order_id);
+
+    if (mysqli_stmt_execute($stmt)) {
+        header("Location: orders.php?success=updated");
+        exit();
+    } else {
+        die("Update failed: " . mysqli_error($conn));
+    }
 }
 
 /* FETCH ORDERS */
@@ -63,13 +71,13 @@ $result = mysqli_query($conn, $query);
         </div>
 
         <nav class="admin-menu">
-            <a href="dashboard.php">Dashboard</a>
-            <a href="products.php">Products</a>
-            <a href="orders.php" class="active">Orders</a>
-            <a href="customers.php">Customers</a>
-            <a href="reports.php">Reports</a>
-            <a href="../logout.php">Logout</a>
-        </nav>
+    <a href="dashboard.php">Dashboard</a>
+    <a href="products.php">Products</a>
+    <a href="orders.php" class="active">Orders</a>
+    <a href="customers.php">Customers</a>
+    <a href="reports.php">Reports</a>
+    <a href="#" onclick="openLogoutModal(); return false;">Logout</a>
+</nav>
     </aside>
 
     <main class="admin-main">
@@ -113,7 +121,7 @@ $result = mysqli_query($conn, $query);
                                     <td><?php echo htmlspecialchars($row["payment_method"]); ?></td>
                                     <td>
                                         <span class="status <?php echo $row["order_status"]; ?>">
-                                            <?php echo ucfirst($row["order_status"]); ?>
+                                           <?php echo ucwords(str_replace("_", " ", $row["order_status"])); ?>
                                         </span>
                                     </td>
                                     <td><?php echo $row["created_at"]; ?></td>
@@ -121,11 +129,12 @@ $result = mysqli_query($conn, $query);
                                         <form method="POST" class="status-form">
                                             <input type="hidden" name="order_id" value="<?php echo $row["order_id"]; ?>">
                                             <select name="order_status">
-                                                <option value="pending" <?php echo $row["order_status"] == "pending" ? "selected" : ""; ?>>Pending</option>
-                                                <option value="preparing" <?php echo $row["order_status"] == "preparing" ? "selected" : ""; ?>>Preparing</option>
-                                                <option value="completed" <?php echo $row["order_status"] == "completed" ? "selected" : ""; ?>>Completed</option>
-                                                <option value="cancelled" <?php echo $row["order_status"] == "cancelled" ? "selected" : ""; ?>>Cancelled</option>
-                                            </select>
+    <option value="pending" <?php echo $row["order_status"] == "pending" ? "selected" : ""; ?>>Pending</option>
+    <option value="preparing" <?php echo $row["order_status"] == "preparing" ? "selected" : ""; ?>>Preparing</option>
+    <option value="out_for_delivery" <?php echo $row["order_status"] == "out_for_delivery" ? "selected" : ""; ?>>Out for Delivery</option>
+    <option value="completed" <?php echo $row["order_status"] == "completed" ? "selected" : ""; ?>>Completed</option>
+    <option value="cancelled" <?php echo $row["order_status"] == "cancelled" ? "selected" : ""; ?>>Cancelled</option>
+</select>
                                             <button type="submit" name="update_status" class="table-action-btn edit-btn">Save</button>
                                         </form>
                                     </td>
@@ -183,6 +192,47 @@ $result = mysqli_query($conn, $query);
         </section>
     </main>
 </div>
+
+<div class="logout-modal-overlay" id="logoutModal">
+    <div class="logout-modal-box">
+        <div class="logout-modal-header">
+            <h3>Logout</h3>
+            <button type="button" class="logout-close-btn" onclick="closeLogoutModal()">&times;</button>
+        </div>
+
+        <div class="logout-modal-body">
+            <p>Are you sure you want to logout from your admin account?</p>
+        </div>
+
+        <div class="logout-modal-actions">
+            <button type="button" class="logout-cancel-btn" onclick="closeLogoutModal()">Cancel</button>
+            <a href="logout.php" class="logout-confirm-btn">Yes, Logout</a>
+        </div>
+    </div>
+</div>
+
+<script>
+function openLogoutModal() {
+    document.getElementById("logoutModal").classList.add("show");
+}
+
+function closeLogoutModal() {
+    document.getElementById("logoutModal").classList.remove("show");
+}
+
+document.addEventListener("keydown", function (e) {
+    if (e.key === "Escape") {
+        closeLogoutModal();
+    }
+});
+
+document.addEventListener("click", function (e) {
+    const logoutModal = document.getElementById("logoutModal");
+    if (e.target === logoutModal) {
+        closeLogoutModal();
+    }
+});
+</script>
 
 </body>
 </html>

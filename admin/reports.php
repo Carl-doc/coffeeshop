@@ -29,7 +29,12 @@ $completedOrders = mysqli_fetch_assoc($completedQuery)["completed_orders"];
 
 /* RECENT ORDERS */
 $recentOrders = mysqli_query($conn, "
-    SELECT orders.order_id, users.full_name, orders.total_amount, orders.order_status, orders.created_at
+    SELECT 
+        orders.order_id,
+        users.full_name,
+        orders.total_amount,
+        orders.order_status,
+        orders.created_at
     FROM orders
     INNER JOIN users ON orders.user_id = users.user_id
     ORDER BY orders.order_id DESC
@@ -63,7 +68,7 @@ $recentOrders = mysqli_query($conn, "
             <a href="orders.php">Orders</a>
             <a href="customers.php">Customers</a>
             <a href="reports.php" class="active">Reports</a>
-            <a href="../logout.php">Logout</a>
+            <a href="#" onclick="openLogoutModal(); return false;">Logout</a>
         </nav>
     </aside>
 
@@ -145,6 +150,47 @@ $recentOrders = mysqli_query($conn, "
     </main>
 
 </div>
+
+<div class="logout-modal-overlay" id="logoutModal">
+    <div class="logout-modal-box">
+        <div class="logout-modal-header">
+            <h3>Logout</h3>
+            <button type="button" class="logout-close-btn" onclick="closeLogoutModal()">&times;</button>
+        </div>
+
+        <div class="logout-modal-body">
+            <p>Are you sure you want to logout from your admin account?</p>
+        </div>
+
+        <div class="logout-modal-actions">
+            <button type="button" class="logout-cancel-btn" onclick="closeLogoutModal()">Cancel</button>
+            <a href="logout.php" class="logout-confirm-btn">Yes, Logout</a>
+        </div>
+    </div>
+</div>
+
+<script>
+function openLogoutModal() {
+    document.getElementById("logoutModal").classList.add("show");
+}
+
+function closeLogoutModal() {
+    document.getElementById("logoutModal").classList.remove("show");
+}
+
+document.addEventListener("keydown", function(e) {
+    if (e.key === "Escape") {
+        closeLogoutModal();
+    }
+});
+
+document.addEventListener("click", function(e) {
+    const modal = document.getElementById("logoutModal");
+    if (e.target === modal) {
+        closeLogoutModal();
+    }
+});
+</script>
 
 </body>
 </html>

@@ -2,10 +2,15 @@
 session_start();
 include(__DIR__ . "/../includes/dbConnect.php");
 
+<?php
+session_start();
+include(__DIR__ . "/../includes/dbConnect.php");
+
 if (!isset($_SESSION["user_id"]) || $_SESSION["role"] !== "admin") {
     header("Location: login.php");
     exit();
 }
+
 
 $error = "";
 $success = "";
